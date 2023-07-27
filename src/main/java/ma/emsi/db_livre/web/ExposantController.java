@@ -54,10 +54,24 @@ public class ExposantController {
 
     @GetMapping("/admin/deleteExposant")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
-    public String deleteExposant(@RequestParam(name = "id") Long id, String keyword, int page){
+    public String deleteExposant(@RequestParam(name = "id") Long id, String keyword, int page,
+                                 @RequestParam(name = "size", defaultValue = "5") int size, Model model) {
+        Exposant exposantToDelete = exposantRepository.findById(id).orElse(null);
+
+
+        if (!exposantToDelete.getLivre().isEmpty()) {
+            // L'exposant est lié à un ou plusieurs livres, affichez un message d'erreur
+            model.addAttribute("errorMessage", "Impossible de supprimer l'exposant car il est lié à un ou plusieurs livres.");
+            return "errorMessage";// Replace this with the name of the view where you want to display the error message
+        }
+
+        // If the exposant is not linked to any Livre, we can simply show a confirmation message.
+        model.addAttribute("confirmMessage", "Êtes-vous sûr de vouloir supprimer cet exposant ?");
+        model.addAttribute("exposant", exposantToDelete);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("keyword", keyword);
         exposantRepository.deleteById(id);
-        return "redirect:/user/listExposants?page="+page+"&keyword="+keyword;
-    }
+        return "redirect:/user/listExposants?page="+page+"&keyword="+keyword;    }
 
     @GetMapping("/")
     public String home(){
